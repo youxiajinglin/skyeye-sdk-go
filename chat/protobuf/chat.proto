@@ -1,0 +1,28 @@
+syntax = "proto3";
+package chat_protobuf;
+
+message ChatUserV3 {
+	string playerId = 1;  // 游戏角色ID 必要
+	string userId = 2;  // 用户ID, 必要
+	string nickname = 3; // 角色昵称 必要
+	int32 level = 4; // 角色等级，必要
+	int32 vipLevel = 5; // 角色VIP等级，为了减少误封，需要此字段
+	int64 power = 6; // 角色战力值 非必要
+	string zoneId = 7; // 区服ID，是指游戏里面的区服 必要
+	string zoneName = 8; //区服名字 必要
+	string createdAt = 9; // 该角色注册时间(东8区) 格式为 YYYY-MM-DD HH:mm:ss
+	string extra = 10; // JSON组成的其它信息
+	string serverId = 11; // 服务器标识
+}
+
+message ChatV3 {
+	string channel = 1;  //消息频道 必要
+	ChatUserV3 from = 2; // 发言人
+	ChatUserV3 to = 3; // 发送给谁，私聊时必要，其它为null
+	string content = 4;  //内容 必要
+	string ip = 5; // 当前发言人的IP 必要
+	string createdAt = 6; //发言时间(东8区) 格式为 YYYY-MM-DD HH:mm:ss
+	string extra = 7; // JSON组成的其它信息
+	int32 status = 8; // 禁言状态
+	string id = 10; // ID
+}
