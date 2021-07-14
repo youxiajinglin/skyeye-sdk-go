@@ -46,7 +46,7 @@ func (c *SkyEye) Start() {
 func (c *SkyEye) NewPool(initialCap, maxCap int,f func() (net.Conn, error)) {
 	pool, err := pool.NewChannelPool(initialCap, maxCap, f)
 	if err != nil {
-		fmt.Errorf("create connect pool fail: ", err)
+		fmt.Errorf("create connect pool fail: %v", err)
 	}
 	c.pool = pool
 }
