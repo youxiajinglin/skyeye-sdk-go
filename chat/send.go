@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/dong568789/skyeye-sdk-go/chat/protobuf"
+	"github.com/youxiajinglin/skyeye-sdk-go/chat/protobuf"
 	"github.com/fatih/pool"
 	"github.com/golang/protobuf/proto"
 	"net"
@@ -13,8 +13,8 @@ import (
 
 type SkyEye struct {
 	id []byte
-	List chan *protobuf.ChatV3
-	Result chan []byte
+	list chan *protobuf.ChatV3
+	result chan []byte
 	pool pool.Pool
 }
 
@@ -22,23 +22,24 @@ type SkyEye struct {
 func NewSkyEye(id []byte) *SkyEye {
 	return &SkyEye{
 		id: id,
-		List: make(chan *protobuf.ChatV3, 100),
-		Result: make(chan []byte, 100),
+		list: make(chan *protobuf.ChatV3, 100),
+		result: make(chan []byte, 100),
 	}
 }
 
 func (c *SkyEye) ChatToChan(chat *protobuf.ChatV3) {
-	c.List <-chat
+	c.list <-chat
 }
 
 func (c *SkyEye) Start() {
 	for {
 		select {
-		case chat := <-c.List:
-			go c.send(chat)
+		case chat := <-c.list:
+			if chat != nil {
+				go c.send(chat)
+			}
 		}
 	}
-	close(c.List)
 }
 
 //initialCap 初始连接数
@@ -54,18 +55,16 @@ func (c *SkyEye) NewPool(initialCap, maxCap int,f func() (net.Conn, error)) {
 func (c *SkyEye) Reply(call func(v3 *protobuf.ChatV3)) {
 	for {
 		select {
-		case result := <-c.Result:
+		case result := <-c.result:
 			chat := &protobuf.ChatV3{}
 			proto.Unmarshal(result, chat)
 			call(chat)
 		}
 	}
-	close(c.Result)
 }
 
 
 func (c *SkyEye) send(chat *protobuf.ChatV3)  {
-	fmt.Printf("send id:%s content:%s \n", chat.GetId(), chat.GetContent())
 	encode, err := proto.Marshal(chat)
 	if err != nil {
 		fmt.Println("parse protobuf fail", err)
@@ -73,13 +72,15 @@ func (c *SkyEye) send(chat *protobuf.ChatV3)  {
 	}
 	buffer := c.encode(encode)
 	conn, _ := c.pool.Get()
+
 	//连接可能为nil
 	if conn == nil {
+		fmt.Println("conn fail")
 		return
 	}
 	_, err = conn.Write(buffer)
 	if err != nil {
-		fmt.Errorf("send fail: %v", err)
+		fmt.Sprintf("send fail: %v \n", err)
 		return
 	}
 	reader := bufio.NewReader(conn)
@@ -87,7 +88,7 @@ func (c *SkyEye) send(chat *protobuf.ChatV3)  {
 	//接收失败，代表连接可能断开，需重连
 	if err != nil {
 		//重新放回管道
-		c.List <-chat
+		c.list <-chat
 		//将失效的连接关闭
 		if pc, ok := conn.(*pool.PoolConn); ok {
 			pc.MarkUnusable()
@@ -98,7 +99,7 @@ func (c *SkyEye) send(chat *protobuf.ChatV3)  {
 	conn.Close()
 
 	//回执加入chan
-	c.Result <-result
+	c.result <-result
 }
 
 func (c *SkyEye) encode(content []byte) []byte {

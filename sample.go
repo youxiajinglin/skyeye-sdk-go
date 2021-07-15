@@ -1,18 +1,17 @@
-package chat
+package main
 
 import (
 	"fmt"
+	"github.com/youxiajinglin/skyeye-sdk-go/chat"
 	"github.com/youxiajinglin/skyeye-sdk-go/chat/protobuf"
 	"net"
 	"strconv"
-	"sync"
-	"testing"
 	"time"
 )
 
-func TestSkyEye_Send(t *testing.T) {
+func main()  {
 	//初始化
-	skyEye := NewSkyEye([]byte{0xce, 0x35})
+	skyEye := chat.NewSkyEye([]byte{0xce, 0x35})
 	//创建连接池，意外断开会自动会重连
 	skyEye.NewPool(1, 2, func() (net.Conn, error) {
 		return net.Dial("tcp", "192.168.1.110:8741")
@@ -20,24 +19,25 @@ func TestSkyEye_Send(t *testing.T) {
 
 	go skyEye.Start()
 
-	wg := sync.WaitGroup{}
+	//获取聊天数据,并放入管道
+	go func() {
+		chat := getChat()
+		for i := 0; i < 5; i++ {
+			n := strconv.Itoa(i)
+			chat.Id = n
+			skyEye.ChatToChan(chat)
+			time.Sleep(2*time.Second)
+		}
+	}()
+
 	//回执处理
 	go skyEye.Reply(func(v3 *protobuf.ChatV3) {
-		wg.Done()
 		fmt.Printf("reply ID：%s 审核结果: %d \r", v3.GetId() ,v3.GetStatus())
 	})
 
-	//获取聊天数据,并放入管道
-	chat := getChat()
-	for i := 0; i < 5; i++ {
-		wg.Add(1)
-		n := strconv.Itoa(i)
-		chat.Id = n
-		skyEye.ChatToChan(chat)
-		time.Sleep(2*time.Second)
-	}
+	select {
 
-	wg.Wait()
+	}
 }
 
 func getChat() *protobuf.ChatV3 {
@@ -62,4 +62,3 @@ func getPlayer() *protobuf.ChatUserV3 {
 		Extra: "",
 	}
 }
-

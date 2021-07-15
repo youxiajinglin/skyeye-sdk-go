@@ -1,4 +1,4 @@
-module github.com/dong568789/skyeye-sdk-go
+module github.com/youxiajinglin/skyeye-sdk-go
 
 go 1.16
 
