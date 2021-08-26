@@ -1,8 +1,8 @@
-package chat
+package skyeye
 
 import (
 	"fmt"
-	"github.com/youxiajinglin/skyeye-sdk-go/chat/protobuf"
+	"github.com/youxiajinglin/skyeye-sdk-go/skyeye/protobuf"
 	"net"
 	"strconv"
 	"sync"
@@ -12,7 +12,7 @@ import (
 
 func TestSkyEye_Send(t *testing.T) {
 	//初始化
-	skyEye := NewSkyEye([]byte{0xce, 0x35})
+	skyEye := New([]byte{0xce, 0x35})
 	//创建连接池，意外断开会自动会重连
 	skyEye.NewPool(1, 2, func() (net.Conn, error) {
 		return net.Dial("tcp", "192.168.1.110:8741")

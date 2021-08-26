@@ -1,11 +1,11 @@
-package chat
+package skyeye
 
 import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/youxiajinglin/skyeye-sdk-go/chat/protobuf"
+	"github.com/youxiajinglin/skyeye-sdk-go/skyeye/protobuf"
 	"github.com/fatih/pool"
 	"github.com/golang/protobuf/proto"
 	"net"
@@ -19,7 +19,7 @@ type SkyEye struct {
 }
 
 //id 天眼后台生成的2 bytes的ID
-func NewSkyEye(id []byte) *SkyEye {
+func New(id []byte) *SkyEye {
 	return &SkyEye{
 		id: id,
 		list: make(chan *protobuf.ChatV3, 100),
@@ -75,6 +75,8 @@ func (c *SkyEye) send(chat *protobuf.ChatV3)  {
 
 	//连接可能为nil
 	if conn == nil {
+		//重新放回管道
+		c.list <-chat
 		fmt.Println("conn fail")
 		return
 	}
