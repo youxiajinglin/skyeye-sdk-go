@@ -20,8 +20,16 @@ func main()  {
 
 	go skyEye.Start()
 
-	//获取聊天数据,并放入管道
+	//回执处理
+	go skyEye.Reply(func(resp *skyeye.Response) {
+		if resp.Err != nil {
+			fmt.Println(resp.Err)
+			return
+		}
+		fmt.Printf("reply ID：%s 审核结果: %d \r", resp.Data.GetId() ,resp.Data.GetStatus())
+	})
 
+	//获取聊天数据,并放入管道
 	chat := skyeye.ChatTest()
 	for i := 0; i < 100; i++ {
 		n := strconv.Itoa(i)
@@ -30,17 +38,5 @@ func main()  {
 		time.Sleep(1*time.Second)
 	}
 
-
-	//回执处理
-	skyEye.Reply(func(resp *skyeye.Response) {
-		if resp.Err != nil {
-			fmt.Println(resp.Err)
-			return
-		}
-		fmt.Printf("reply ID：%s 审核结果: %d \r", resp.Data.GetId() ,resp.Data.GetStatus())
-	})
-
-	select {
-
-	}
+	select {}
 }
