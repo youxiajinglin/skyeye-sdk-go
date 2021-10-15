@@ -15,7 +15,7 @@ func main()  {
 	//创建连接池，意外断开会自动会重连
 	skyEye.NewPool(1, 1, func() (net.Conn, error) {
 		//设置连接超时2秒
-		return net.DialTimeout("tcp", "192.168.1.110:8741", time.Second*2)
+		return net.Dial("tcp", "192.168.1.110:8741")
 	})
 
 	go skyEye.Start()
